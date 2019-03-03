@@ -4,10 +4,12 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.web.client.RestTemplate;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+
+import java.io.IOException;
+
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import io.bankbridge.handler.BankConnectionClient;
@@ -35,32 +37,40 @@ public class BankConnectionClientTest {
 	}
 
 	@Test
-	public void testGetMessage() throws JsonProcessingException {
-
+	public void testGetMessage() throws IOException {
+        String success="{\"bic\":\"1234\",\"name\":\"Royal Bank of Boredom\",\"countryCode\":\"GB\",\"auth\":\"OAUTH\"}";
 		mockServer.expect(requestTo("http://google.com")).andExpect(method(HttpMethod.GET))
-				.andRespond(withSuccess("resultSuccess", MediaType.TEXT_PLAIN));
+				.andRespond(withSuccess(success, MediaType.TEXT_PLAIN));
 		String result = bankServiceClient.getBankDetails("Royal Bank of Boredom", "http://google.com");
-		mockServer.verify();
-		assertEquals("resultSuccess", result);
-	}
-
-	@Test
-	public void testGetMessage_500() throws JsonProcessingException {
-		mockServer.expect(requestTo("http://google.com")).andExpect(method(HttpMethod.GET))
-				.andRespond(withServerError());
-		String result = bankServiceClient.getBankDetails("Royal Bank of Boredom", "http://google.com");
-		String expected = JsonUtils.convertToJsonString("Royal Bank of Boredom", "Unable to fetch details");
+		String expected="{\n" + 
+				"  \"Royal Bank of Boredom\" : {\n" + 
+				"    \"bic\" : \"1234\",\n" + 
+				"    \"name\" : \"Royal Bank of Boredom\",\n" + 
+				"    \"countryCode\" : \"GB\",\n" + 
+				"    \"auth\" : \"OAUTH\"\n" + 
+				"  }\n" + 
+				"}";
 		mockServer.verify();
 		assertEquals(expected, result);
 	}
 
 	@Test
-	public void testGetMessage_404() throws JsonProcessingException {
+	public void testGetMessage_500() throws IOException {
+		mockServer.expect(requestTo("http://google.com")).andExpect(method(HttpMethod.GET))
+				.andRespond(withServerError());
+		String result = bankServiceClient.getBankDetails("Royal Bank of Boredom", "http://google.com");
+		String expected = JsonUtils.convertErrorToJsonString("Royal Bank of Boredom");
+		mockServer.verify();
+		assertEquals(expected, result);
+	}
+
+	@Test
+	public void testGetMessage_404() throws IOException {
 		mockServer.expect(requestTo("http://google.com")).andExpect(method(HttpMethod.GET))
 				.andRespond(withStatus(HttpStatus.NOT_FOUND));
 		String result = bankServiceClient.getBankDetails("Royal Bank of Boredom", "http://google.com");
 		mockServer.verify();
-		String expected = JsonUtils.convertToJsonString("Royal Bank of Boredom", "Unable to fetch details");
+		String expected = JsonUtils.convertErrorToJsonString("Royal Bank of Boredom");
 		assertEquals(expected, result);
 	}
 }
