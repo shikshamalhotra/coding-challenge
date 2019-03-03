@@ -30,15 +30,15 @@ public class BanksCacheBased {
 	public static void init() throws Exception {
 		cacheManager = CacheManagerBuilder
 				.newCacheManagerBuilder().withCache("banks", CacheConfigurationBuilder
-						.newCacheConfigurationBuilder(String.class, String.class, ResourcePoolsBuilder.heap(10)))
+						.newCacheConfigurationBuilder(String.class, BankModel.class, ResourcePoolsBuilder.heap(10)))
 				.build();
 		cacheManager.init();
-		Cache<String, String> cache = cacheManager.getCache("banks", String.class, String.class);
+		Cache<String, BankModel> cache = cacheManager.getCache("banks", String.class, BankModel.class);
 		try {
 			BankModelList models = new ObjectMapper().readValue(
 					Thread.currentThread().getContextClassLoader().getResource("banks-v1.json"), BankModelList.class);
 			for (BankModel model : models.banks) {
-				cache.put(model.bic, model.name);
+				cache.put(model.getBic(), model);
 			}
 		} catch (Exception e) {
 			throw e;
@@ -47,11 +47,10 @@ public class BanksCacheBased {
 
 	public static String handle(Request request, Response response) {
 
-		List<Map<String,String>> result = new ArrayList<>();
-		cacheManager.getCache("banks", String.class, String.class).forEach(entry -> {
-			Map<String,String> map = new HashMap<>();
-			map.put("id", entry.getKey());
-			map.put("name", entry.getValue());
+		List<Map<String,BankModel>> result = new ArrayList<>();
+		cacheManager.getCache("banks", String.class, BankModel.class).forEach(entry -> {
+			Map<String,BankModel> map = new HashMap<>();
+			map.put(entry.getValue().getName(), entry.getValue());
 			result.add(map);
 		});
 		try {

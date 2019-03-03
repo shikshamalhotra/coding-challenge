@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.bankbridge.model.BankModel;
 import io.bankbridge.utils.JsonUtils;
 import spark.Request;
 import spark.Response;
@@ -42,12 +43,11 @@ public class BanksRemoteCalls {
 	 * details and returns List of Banks in the form of Json String
 	 */
 	public static String handle(Request request, Response response) {
-		List<Map<String, String>> result = new ArrayList<>();
+		List<Map<String, BankModel>> result = new ArrayList<>();
 		config.entrySet().stream().forEach(entry -> {
 			try {
 				String bankDetails = bankConnectionClient.getBankDetails(entry.getKey(), entry.getValue());
-				result.add(JsonUtils.convertJsonStringToMap(bankDetails));
-
+				result.add(JsonUtils.convertJsonStringToBankMap(bankDetails));
 			} catch (IOException e) {
 				throw new RuntimeException("Error while processing request");
 			}

@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import io.bankbridge.handler.BanksCacheBased;
+import io.bankbridge.model.BankModel;
 import spark.Request;
 import spark.Response;
 
@@ -27,13 +28,17 @@ public class BanksCacheBasedTest {
 	public void setUp() {
 		cacheManager = CacheManagerBuilder
 				.newCacheManagerBuilder().withCache("banks", CacheConfigurationBuilder
-						.newCacheConfigurationBuilder(String.class, String.class, ResourcePoolsBuilder.heap(10)))
+						.newCacheConfigurationBuilder(String.class, BankModel.class, ResourcePoolsBuilder.heap(10)))
 				.build();
 		cacheManager.init();
 
-		Cache<String, String> cache = cacheManager.getCache("banks", String.class, String.class);
-		cache.put("1234", "Royal Bank of Boredom");
-		cache.put("5678", "Credit Sweets");
+		Cache<String, BankModel> cache = cacheManager.getCache("banks", String.class, BankModel.class);
+		BankModel bankModel=new BankModel();
+		bankModel.setAuth("OAUTH");
+		bankModel.setBic("1234");
+		bankModel.setCountryCode("GB");
+		bankModel.setName("Royal Bank of Boredom");
+		cache.put("Royal Bank of Boredom", bankModel);
 
 	}
 
@@ -44,7 +49,7 @@ public class BanksCacheBasedTest {
 		Request request = null;
 		Response response = null;
 		String result = BanksCacheBased.handle(request, response);
-		String expected = "[{\"name\":\"Credit Sweets\",\"id\":\"5678\"},{\"name\":\"Royal Bank of Boredom\",\"id\":\"1234\"}]";
+		String expected="[{\"Royal Bank of Boredom\":{\"bic\":\"1234\",\"name\":\"Royal Bank of Boredom\",\"countryCode\":\"GB\",\"auth\":\"OAUTH\"}}]";
 		assertEquals(expected, result);
 	}
 

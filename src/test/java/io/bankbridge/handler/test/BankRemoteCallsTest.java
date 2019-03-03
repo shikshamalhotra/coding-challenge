@@ -32,7 +32,14 @@ public class BankRemoteCallsTest {
 	@Before
 	public void setUp() {
 		MockitoAnnotations.initMocks(this);
-		rbbBankDetails = "{\n" + "\"bic\":\"1234\",\n" + "\"countryCode\":\"GB\",\n" + "\"auth\":\"OAUTH\"\n" + "}";
+		rbbBankDetails = "{\n" + 
+				"  \"Royal Bank of Boredom\" : {\n" + 
+				"    \"bic\" : \"1234\",\n" + 
+				"    \"name\" : null,\n" + 
+				"    \"countryCode\" : \"GB\",\n" + 
+				"    \"auth\" : \"OAUTH\"\n" + 
+				"  }\n" + 
+				"}";
 	}
 
 	@Test
@@ -45,7 +52,7 @@ public class BankRemoteCallsTest {
 		HashMap<String, String> map = new HashMap<>();
 		map.put(bankName, bankUrl);
 		when(bankConnectionClient.getBankDetails(bankName, bankUrl)).thenReturn(rbbBankDetails);
-		String expected = "[{\"auth\":\"OAUTH\",\"countryCode\":\"GB\",\"bic\":\"1234\"}]";
+		String expected = "[{\"Royal Bank of Boredom\":{\"bic\":\"1234\",\"name\":null,\"countryCode\":\"GB\",\"auth\":\"OAUTH\"}}]";
 		Request request = null;
 		Response response = null;
 		BanksRemoteCalls.setConfig(map);

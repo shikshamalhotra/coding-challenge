@@ -1,8 +1,13 @@
 package io.bankbridge.handler;
 
+import java.io.IOException;
+
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.bankbridge.model.BankModel;
 import io.bankbridge.utils.JsonUtils;
 
 /**
@@ -21,14 +26,14 @@ public class BankConnectionClient {
 	 * @param bankName
 	 * @param bankUrl
 	 * @return Banks details in form of String (Json)
-	 * @throws JsonProcessingException Make connection with different banks using
-	 *                                 Rest Client and returns bank details in form
-	 *                                 of Json String
+	 * @throws IOException 
 	 */
-	public String getBankDetails(String bankName, String bankUrl) throws JsonProcessingException {
+	public String getBankDetails(String bankName, String bankUrl) throws IOException {
 		String response = null;
 		try {
-			response = restTemplate.getForObject(bankUrl, String.class);
+			String bankDetails = restTemplate.getForObject(bankUrl, String.class);
+			BankModel bankModel = new ObjectMapper().readValue(bankDetails, BankModel.class);
+			response=JsonUtils.convertBankObjToJsonString(bankModel,bankName);
 		} catch (HttpStatusCodeException e) {
 			response = handleExceptionForABank(bankName);
 		} catch (RuntimeException ex) {
@@ -44,8 +49,8 @@ public class BankConnectionClient {
 	 * @throws JsonProcessingException handles exception if geBankDetails is unable
 	 *                                 to fetch details for a bank.
 	 */
-	public String handleExceptionForABank(String bank) throws JsonProcessingException {
-		return JsonUtils.convertToJsonString(bank, "Unable to fetch details");
+	public String handleExceptionForABank(String bankName) throws JsonProcessingException {
+		return JsonUtils.convertErrorToJsonString(bankName);
 	}
 
 	public void setRestTemplate(RestTemplate restTemplate) {
